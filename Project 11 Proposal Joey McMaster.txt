@@ -1,0 +1,19 @@
+Project 11 Final project Proposal: 
+- Joey McMaster (solo project), CSC 337, Spring 2019
+
+This web app will implement "battleship", the board game that is played between 2 players.
+I will implement a client that displays the state of the game, and it will interact with a server that runs the (basic) AI for the other player. 
+The UI will consist 2, 10 x 10 grids with visuals that look like the real game. 
+It will also have a button to restart the game, and panel to show the last move made by the AI player along with stats about the game (hits, ships left to sink ect)
+There will also be a panel of buttons that the player can use while setting up his ships such as buttons to choose what ship to place and to rotate it. 
+The first grid will first allow the human player to place his ships, and when the game is being played, will show where the AI player is made moves (hits and misses).
+The second grid will be where the player, after the player sets up his ships, will make moves  by clicking the grid. Marking hits and misses 
+An alert message will pop up to announce the winner once the game ends (the player that sinks all his opponents ships). 
+The restart button can then be used to start a new game. 
+On start up, if a save game is found from a previous uncompleted game. That state will be sent to client and the game will resume from that state.
+
+
+The program will use a post request at the start of each game to send the players ship placements to the server for the AI to use. 
+The program will then use normal fetches to send data about a move to the server (easily done via 2 args) to make a move, the server then responds to it.
+Either stating that move is invalid and prompting another move. Or running the move, then an AI move then returning the new state of the board along with extra data.
+When a move is successful, a save game file is updated/generated 

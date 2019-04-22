@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<!-- CSC 337, Homework 11 (Battleship)
+	 Student: Joey McMaster
+	 Spring 2019
+-->
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="battleship.css" />
+		<script type="text/javascript" src="battleship.js"></script>
+		<title>Battle ship</title>
+	</head>
+	<body>
+		<div id="introtext">
+			<h1>
+				Battleship The Web game				
+			</h1>
+			<h4>
+				Written by: Joey McMaster
+			</h4>
+			<h4>
+				Click the Restart button to start a new game.
+			</h4>
+		</div>
+		<div id="dragarea">
+			<canvas id="dragwindow" width="100" height="424"></canvas>
+			<div id="mygrid">
+				<canvas id="mydrawgrid" width="424" height="424"></canvas>
+			</div>
+			<div id="aigrid">
+			</div>
+			<div id="statpannel">
+				<button id="restartbutton"> Restart </button>
+				<p id="Hits"> 0 Hits
+				</p>
+				<p id="Misses"> 0 Misses
+				</p>
+				<p id="ShipsSank">
+					Ships Sank:
+				</p>
+				<p id="HShipsSank">
+					Your Ships Sunk:
+				</p>
+			</div>
+		</div>
+	</body>
+</html>
