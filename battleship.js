@@ -30,67 +30,6 @@
 	function getCPUShipsSank() {
 		return "Unknown";
 	}
-	// I will assume this is called on a hit.
-	function sankShip(humanplayer, xx, yy) {
-		let grid = [];
-		let targetinggrid = [];
-		if (humanplayer) {
-			grid = _hostilegrid;
-			targetinggrid = _dishgrid;
-		} else {
-			grid = _grid;
-			targetinggrid = _dishmgrid;
-		}
-			let target = grid[xx][yy];
-			let length = shipIdToLength(target);
-			// Get to start of the ship.
-			if (xx != 0 && yy != 0) {
-				if (grid[xx - 1][yy] == target) {
-					xx--;
-					while(xx > 0 && grid[xx- 1][yy] == target) {
-						xx--;
-					}
-				} else if (grid[xx][yy - 1] == target) {
-					yy--;
-					while(yy > 0 && grid[xx][yy - 1] == target) {
-						yy--;
-					}
-				}
-			} else if (yy == 0) {
-				if (grid[xx - 1][yy] == target) {
-					xx--;
-					while(xx > 0 && grid[xx- 1][yy] == target) {
-						xx--;
-					}
-				}
-			} else if (xx == 0) {
-				if (grid[xx][yy - 1] == target) {
-					yy--;
-					while(yy > 0 && grid[xx][yy - 1] == target) {
-						yy--;
-					}
-				}
-			}
-			console.log("start of ship: " + xx + "," + yy);
-			// At start of ship, Walk the entire ship length.
-			let mod = 0;
-			if (grid[xx][yy + 1] == target) {
-				while(targetinggrid[xx][yy + mod]  ==  1 && grid[xx][yy + mod] == target && mod < length) {
-					mod++;
-				}
-				if (mod == length) {
-					return true;
-				}
-			} else if (grid[xx + 1][yy] == target) {
-				while(targetinggrid[xx + mod][yy]  ==  1 && grid[xx + mod][yy] == target && mod < length) {
-					mod++;
-				}
-				if (mod == length) {
-					return true;
-				}
-			}
-		return false;
-	}
 	function makeAMove() {
 		if (_allowMove) {
 			let canvas = document.getElementById("targetingGrid");
@@ -104,7 +43,7 @@
 			if (_dishgrid[x][y] == -1) {
 				if (_hostilegrid[x][y] != 0) {
 					_dishgrid[x][y] = 1;
-					console.log("Hit with id: " + _hostilegrid[x][y]);
+					//console.log("Hit with id: " + _hostilegrid[x][y]);
 					if (sankShip(true, x,y)) {
 						appendAShipSank(true,getShipNameById(_hostilegrid[x][y]));
 					}
@@ -165,10 +104,12 @@
 		});
 	}
 	function sendMoveToServer() {
+		console.log("Send move to server");
 		_allowMove = false;
+		let win = getWinStatus();
 		// AJAX Call 1
-		// Tell the server if we have won or not and get the cpu's move. 
-		fetch("http://localhost:" + PORT +"/?win=" + getWinStatus())
+		// Tell the server if we have won or not and get the servers game state.
+		fetch("http://localhost:" + PORT +"/?win=" + win)
 		.then(checkStatus)
 		.then(function(res) {
 			let data = JSON.parse(res);
@@ -177,6 +118,25 @@
 					_dishmgrid[x][y] = data[x][y];
 				}
 			}
+		})
+		.catch(function(error) {
+			console.log(error);
+			_allowMove = true;
+		});
+		if (win == -1 || win == 1) {
+			_allowMove = true;
+			return;
+		}
+		// AJAX Call 2
+		// Ask for the cords of the move that the CPU just made.
+		fetch("http://localhost:" + PORT +"/?win=" + 1000)
+		.then(checkStatus)
+		.then(function(res) {
+			let data = JSON.parse(res);
+			if (sankShip(false, data[0], data[1])) {
+				appendAShipSank(false,getShipNameById(_grid[data[0]][data[1]]));
+			}
+			reDrawTargetingGrids();
 			_allowMove = true;
 		})
 		.catch(function(error) {
@@ -662,8 +622,8 @@
 		_allowMove = true;
 		_gameState = 0;
 		document.getElementById("aigrid").innerHTML = "";
-		document.getElementById("ShipsSank").innerHTML = "";
-		document.getElementById("HShipsSank").innerHTML = "";
+		document.getElementById("ShipsSank").innerHTML = "Ships Sank:";
+		document.getElementById("HShipsSank").innerHTML = "Your Ships Sunk:";
 		_totalhitcount = 0;
 		_totalmisscount = 0;
 		updateInfoPannel();
@@ -687,6 +647,71 @@
 			document.getElementById("HShipsSank").appendChild(n);
 			document.getElementById("HShipsSank").innerHTML += str;
 		}
+	}
+	// I will assume this is called on a hit.
+	function sankShip(humanplayer, xx, yy) {
+		if (xx < 0 || yy < 0) {
+			console.log("ERROR: sankShip x or y below 0!");
+			return;
+		}
+		let grid = [];
+		let targetinggrid = [];
+		if (humanplayer) {
+			grid = _hostilegrid;
+			targetinggrid = _dishgrid;
+		} else {
+			grid = _grid;
+			targetinggrid = _dishmgrid;
+		}
+		let target = grid[xx][yy];
+		let length = shipIdToLength(target);
+		// Get to start of the ship.
+		if (xx != 0 && yy != 0) {
+			if (grid[xx - 1][yy] == target) {
+				xx--;
+				while(xx > 0 && grid[xx- 1][yy] == target) {
+					xx--;
+				}
+			} else if (grid[xx][yy - 1] == target) {
+				yy--;
+				while(yy > 0 && grid[xx][yy - 1] == target) {
+					yy--;
+				}
+			}
+		} else if (yy == 0 && xx > 0) {
+			if (grid[xx - 1][yy] == target) {
+				xx--;
+				while(xx > 0 && grid[xx - 1][yy] == target) {
+					xx--;
+				}
+			}
+		} else if (xx == 0 && yy > 0) {
+			if (grid[xx][yy - 1] == target) {
+				yy--;
+				while(yy > 0 && grid[xx][yy - 1] == target) {
+					yy--;
+				}
+			}
+		}
+		//console.log("start of ship: " + xx + "," + yy);
+		// At start of ship, Walk the entire ship length.
+		let mod = 0;
+		if (grid[xx][yy + 1] == target) {
+			while((yy + mod) < 10 && targetinggrid[xx][yy + mod]  ==  1 && grid[xx][yy + mod] == target && mod < length) {
+				mod++;
+			}
+			if (mod == length) {
+				return true;
+			}
+		} else if (grid[xx + 1][yy] == target) {
+			while((xx + mod) < 10 && targetinggrid[xx + mod][yy]  ==  1 && grid[xx + mod][yy] == target && mod < length) {
+				mod++;
+			}
+			if (mod == length) {
+				return true;
+			}
+		}
+		return false;
 	}
 	/**
 	* [COPIED DIRRECTLY FROM THE LECTURE SLIDES]

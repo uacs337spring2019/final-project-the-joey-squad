@@ -17,8 +17,6 @@ let _HumanBoard = [];
 let _cpumovemode = 0; // 0 = Has no hits, chooses a random spot. 1 = CPU knows about a human ship and is targeting it.
 let _lastx = 0;
 let _lasty = 0;
-let _AI_curx = 0;
-let _AI_cury = 0;
 app.use(express.static('public'));
 /**
 	Gets data from the request,
@@ -31,7 +29,10 @@ app.get('/', function (req, res) {
 	if (win == 100) { // The request for what the CPU's data is.
 		res.send(JSON.stringify(_CPUBoard));
 	} else if (win == 1000) { // The request for the last move.
-		
+		let data = [];
+		data[0] = _lastx;
+		data[1] = _lasty;
+		res.send(JSON.stringify(data));
 	} else {
 		res.send(CPUMakeMove());
 	}
@@ -63,10 +64,10 @@ function CPUMakeMove() {
 			if (_cpumovemode == 0) {
 				_lastx += 2;
 				if (_lastx == 10) {
-					_lastx = 0;
+					_lastx = 1;
 					_lasty++;
 				} else if (_lastx == 11) {
-					_lastx = 1;
+					_lastx = 0;
 					_lasty++;
 				}
 				if (_lasty > 9) {
