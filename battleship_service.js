@@ -283,7 +283,7 @@ function CPUMakeMove() {
 		}
 		_lastx = x;
 		_lasty = y;
-		console.log("Failed to find another hit move, going back to random moves!")
+		//console.log("Failed to find another hit move, going back to random moves!")
 		_cpumovemode = 0;
 		CPUMakeMove(); // No move made, go back to original state.
 	}

@@ -25,8 +25,35 @@
 	function main() {
 		document.getElementById("restartbutton").onclick = restartGame;
 		document.getElementById("loadbutton").onclick = loadOldData;
+		document.getElementById("sendtxt").onclick = sendExtraText;
 		init();
 		initSetUpShips();
+	}
+	/**
+		Grabs text from the text field
+		Sets the selected ship id for placement.
+	*/
+	function sendExtraText() {
+		let txt = document.getElementById("txtinput").value;
+		let shipid = 1;
+		try {
+			shipid = parseInt(txt);
+		} catch (e) {
+			console.log("Invalid User Input!");
+			return;
+		}
+		if (_gameState != 0) {
+			console.log("Already in game, can not set ship id to place.");
+			return; // Not a valid time to use.
+		}
+		if (shipid > 0 && shipid < 6) {
+			if (!shipExistsInData(shipid)) {
+				_selectedShipType = shipid;
+			}
+			console.log("Ship is already placed!");
+			return;
+		}
+		console.log("Id was out of range!");
 	}
 	/**
 		Translates a click on the grid and runs a move.

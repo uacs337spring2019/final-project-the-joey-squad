@@ -1,13 +1,21 @@
+/*  
+	Joey McMaster
+	CSC337
+	Spring 2019
+	Project 11
+	Goal is styleize the Battleship website.
+*/
 #dragarea {
 	display: flex;
 	justify-content: flex-start;
 	border: 2px solid red;
 	position: relative;
 	background-color: blue;
+	border-radius: 5px;
 }
 h1, h4 {
 	text-align: center;
-	font: Arial, "Times New Roman", serif;
+	font: 10px arial, sans-serif;
 }
 #introtext,h1,h4 {
 	background-color: #000000;
@@ -18,5 +26,23 @@ h1, h4 {
 	flex-direction: column;
 	justify-content: flex-start;
 	border: 2px solid blue;
+	border-radius: 1px;
 	background-color: white;
+}
+#sswtext {
+	background-color: grey;
+	border: 5px solid black;
+	padding: 1px;
+	margin: 2px;
+	border-radius: 5px;
+	float: right;
+}
+.infotxt {
+	text-align: left;
+}
+.class2 {
+	text-align: right;
+	font: 10px arial, sans-serif;
+	font-family: cursive;
+	color: purple;
 }

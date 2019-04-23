@@ -31,17 +31,23 @@
 			<div id="statpannel">
 				<button id="restartbutton"> Restart </button>
 				<button id="loadbutton"> Load Old Game </button>
-				<p id="Hits"> 0 Hits
+				<p id="Hits" class="infotxt"> 0 Hits
 				</p>
-				<p id="Misses"> 0 Misses
+				<p id="Misses" class="infotxt"> 0 Misses
 				</p>
-				<p id="ShipsSank">
+				<p id="ShipsSank" class="infotxt">
 					Ships Sank:
 				</p>
-				<p id="HShipsSank">
+				<p id="HShipsSank" class="infotxt">
 					Your Ships Sunk:
 				</p>
 			</div>
+		</div>
+		<div id="sswtext">
+			<p class="class2"> Input Ship Id </p>
+			<p class="class2"> (1 - 5) </p>
+			<input type="text" value="1" id="txtinput"/>
+			<button id="sendtxt"> Set Selected Ship Id </button>
 		</div>
 	</body>
 </html>
