@@ -1,5 +1,5 @@
 {
-  "name": "Battleship service",
+  "name": "battleship_service.js",
   "version": "1.0.0",
   "engines": {
     "node": "10.15.1"
