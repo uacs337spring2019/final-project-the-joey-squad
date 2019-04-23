@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Implements the battleship service",
   "main": "battleship_service.js",
+  "dependencies": {
   "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "fs": "^0.0.1-security"
