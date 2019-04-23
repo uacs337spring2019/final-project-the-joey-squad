@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "engines": {
     "node": "10.15.1"
-  }
+  },
   "description": "Implements the battleship service",
   "main": "battleship_service.js",
   "dependencies": {
