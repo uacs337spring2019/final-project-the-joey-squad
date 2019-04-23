@@ -7,6 +7,7 @@
 "use strict";
 (function() {
 	const PORT = 3000;
+	const HOST = "http://localhost";
 	let _grid = []; // My data where my ships area
 	let _dishmgrid = []; // My data in format to interact with CPU moves
 	let _dishgrid = [];  // The data that is displayed to my targeting area
@@ -24,11 +25,9 @@
 		Sets up the color picker colors and sets up the handlers. */
 	function main() {
 		document.getElementById("restartbutton").onclick = restartGame;
+		document.getElementById("loadbutton").onclick = loadOldData;
 		init();
 		initSetUpShips();
-	}
-	function getCPUShipsSank() {
-		return "Unknown";
 	}
 	function makeAMove() {
 		if (_allowMove) {
@@ -53,7 +52,7 @@
 					_totalmisscount++;
 				}
 				//console.log(_dishgrid);
-				sendMoveToServer();
+				sendMoveToServer(x,y);
 				reDrawTargetingGrids();
 				let win = getWinStatus();
 				if (win == 1) {
@@ -88,7 +87,7 @@
 		return 0;
 	}
 	function getServerData() {
-		fetch("http://localhost:" + PORT +"/?win=100")
+		fetch(HOST + ":" + PORT +"/?win=100&x=0&y=0")
 		.then(checkStatus)
 		.then(function(res) {
 			let data = JSON.parse(res);
@@ -103,13 +102,13 @@
 			restartGame();
 		});
 	}
-	function sendMoveToServer() {
+	function sendMoveToServer(x,y) {
 		console.log("Send move to server");
 		_allowMove = false;
 		let win = getWinStatus();
 		// AJAX Call 1
 		// Tell the server if we have won or not and get the servers game state.
-		fetch("http://localhost:" + PORT +"/?win=" + win)
+		fetch(HOST + ":" + PORT +"/?win=" + win + "&x=" + x +"&y=" + y)
 		.then(checkStatus)
 		.then(function(res) {
 			let data = JSON.parse(res);
@@ -129,7 +128,7 @@
 		}
 		// AJAX Call 2
 		// Ask for the cords of the move that the CPU just made.
-		fetch("http://localhost:" + PORT +"/?win=" + 1000)
+		fetch(HOST + ":" + PORT +"/?win=" + 1000 + "&x=0&y=0")
 		.then(checkStatus)
 		.then(function(res) {
 			let data = JSON.parse(res);
@@ -712,6 +711,17 @@
 			}
 		}
 		return false;
+	}
+	function loadOldData() {
+		console.log("loadOldData called!");
+		// AJAX Call 1
+		// Tell the server to read in the data for the last save game state then send it. 
+		fetch(HOST + ":" + PORT +"/?win=10000&x=0&y=0")
+		.then(checkStatus)
+		.then(function(res) {
+			console.log(res);
+			//let data = JSON.parse(res);
+		})
 	}
 	/**
 	* [COPIED DIRRECTLY FROM THE LECTURE SLIDES]
