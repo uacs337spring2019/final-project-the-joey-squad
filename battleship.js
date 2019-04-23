@@ -103,7 +103,7 @@
 		});
 	}
 	function sendMoveToServer(x,y) {
-		console.log("Send move to server");
+		//console.log("Send move to server");
 		_allowMove = false;
 		let win = getWinStatus();
 		// AJAX Call 1
@@ -713,14 +713,35 @@
 		return false;
 	}
 	function loadOldData() {
+		if (_gameState == 0) {
+			console.log("Must start a game before restoring an old one");
+			return;
+		}
+		_totalhitcount = 0;
+		_totalmisscount = 0;
 		console.log("loadOldData called!");
 		// AJAX Call 1
 		// Tell the server to read in the data for the last save game state then send it. 
 		fetch(HOST + ":" + PORT +"/?win=10000&x=0&y=0")
 		.then(checkStatus)
 		.then(function(res) {
-			console.log(res);
-			//let data = JSON.parse(res);
+			//console.log(res);
+			let data = JSON.parse(res);
+			for(let x = 0; x < 10; x++) {
+				for(let y = 0; y < 10; y++) {
+					_grid[x][y] = data.humanraw[x][y];
+					_dishgrid[x][y] = data.humandisplay[x][y];
+					_hostilegrid[x][y] = data.cpuraw[x][y];
+					_dishmgrid[x][y] = data.cpudisplay[x][y];
+					if (_dishgrid[x][y] == 1) {
+						_totalhitcount++;
+					} else if (_dishgrid[x][y] == 0) {
+						_totalmisscount++;
+					}
+				}
+			}
+			reDrawTargetingGrids();
+			updateInfoPannel();			
 		})
 	}
 	/**
