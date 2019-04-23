@@ -6,7 +6,7 @@
 */
 "use strict";
 (function() {
-	const PORT = 3000;
+	const PORT = process.env.PORT;
 	const HOST = "http://localhost";
 	let _grid = []; // My data where my ships area
 	let _dishmgrid = []; // My data in format to interact with CPU moves
