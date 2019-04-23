@@ -13,12 +13,12 @@ const PORT = 3000;
 let fs = require('fs');
 let _CPUBoard = [];
 let _CPUDisplay = [];
+let _HumanDisplay = [];
 let _HumanBoard = [];
 let _cpumovemode = 0; // 0 = Has no hits, chooses a random spot. 1 = CPU knows about a human ship and is targeting it.
 let _lastx = 0;
 let _lasty = 0;
-let _AI_curx = 0;
-let _AI_cury = 0;
+let _ranonce = false;
 app.use(express.static('public'));
 /**
 	Gets data from the request,
@@ -26,14 +26,46 @@ app.use(express.static('public'));
 */
 app.get('/', function (req, res) {
 	res.header("Access-Control-Allow-Origin", "*");
+	if (!_ranonce) {
+		startupPrep();
+		_ranonce = true;
+	}
 	let win = parseInt(req.query.win);
+	let x = parseInt(req.query.x);
+	let y = parseInt(req.query.y);
 	console.log("win = " + win);
 	if (win == 100) { // The request for what the CPU's data is.
 		res.send(JSON.stringify(_CPUBoard));
 	} else if (win == 1000) { // The request for the last move.
-		
+		let data = [];
+		data[0] = _lastx;
+		data[1] = _lasty;
+		res.send(JSON.stringify(data));
+	} else if (win == 10000) {
+		loadOldState();
+		let data = {};
+		data["humanraw"] = [];
+		data["humandisplay"] = [];
+		data["cpuraw"] = [];
+		data["cpudisplay"] = [];
+		for(let x = 0; x < 10; x++) {
+			data["cpuraw"][x] = [];
+			data["cpudisplay"][x] = [];
+			data["humanraw"][x] = [];
+			data["humandisplay"][x] = [];
+			for(let y = 0; y < 10; y++) {
+				data["cpuraw"][x][y] = _CPUBoard[x][y];
+				data["cpudisplay"][x][y] = _CPUDisplay[x][y];
+				data["humanraw"][x][y] = _HumanBoard[x][y];
+				data["humandisplay"][x][y] =_HumanDisplay[x][y];
+			}
+		}
+		res.send(JSON.stringify(data));
 	} else {
-		res.send(CPUMakeMove());
+		humanMakeMove(x,y);
+		let responce = CPUMakeMove();
+		saveData();
+		res.send(responce);
 	}
 })
 /**
@@ -42,8 +74,13 @@ app.get('/', function (req, res) {
 app.post('/', jsonParser, function (req, res) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	if (!_ranonce) {
+		startupPrep();
+		_ranonce = true;
+	}
 	let data = req.body.data;
 	init(data);
+	console.log(data);
 	res.send(JSON.stringify(_CPUBoard));
 });
 /**
@@ -54,6 +91,82 @@ app.use(function(req, res, next) {
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	next();
 });
+function loadOldState() {
+	let file = null;
+	try {
+		file = fs.readFileSync("lastgamestate.txt", 'utf8');
+	} catch(e) {
+		console.log("IO ERROR!");
+		return;
+	}
+	let strings = file.split("|");
+	if (strings.length != 5) {
+		console.log("Invalid File Format!");
+		return;
+	}
+	for(let z = 0; z < 5; z++) {
+		if (z == 4) {
+			_cpumovemode = parseInt(strings[0]);
+			_lastx = parseInt(strings[2]);
+			_lasty = parseInt(strings[4]);
+		} else {
+			let count = 0;
+			let nums = strings[z].split(" ");
+			console.log("len of nums = " + nums.length);
+			for(let x = 0; x < 10; x++) {
+				for(let y = 0; y < 10; y++) {
+					if (count < 100) {
+						let i = parseInt(nums[count]);
+						count++;
+						if (z == 0) {
+							_CPUBoard[x][y] = i;
+						} else if (z == 1) {
+							_CPUDisplay[x][y] = i;
+						} else if (z == 2) {
+							_HumanBoard[x][y] = i;
+						} else {
+							_HumanDisplay[x][y] = i;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+function saveData() {
+	let content = "";
+	for(let type = 0; type < 4; type++) {
+		for(let x = 0; x < 10; x++) {
+			for(let y = 0; y < 10; y++) {
+				if (type == 0) {
+					content += _CPUBoard[x][y] + " ";
+				} else if (type == 1) {
+					content += _CPUDisplay[x][y] + " ";
+				} else if (type == 2) {
+					content += _HumanBoard[x][y] + " ";
+				} else {
+					content += _HumanDisplay[x][y] + " ";
+				}
+			}
+		}
+		content += "|";
+	}
+	content += _cpumovemode + " ";
+	content += _lastx + " ";
+	content += _lasty + " ";
+	fs.writeFile("lastgamestate.txt", content, function(err) {
+		if(err) {
+			return console.log(err);
+		}
+	});
+}
+function humanMakeMove(x,y) {
+	if (_CPUBoard[x][y] != 0) {
+		_HumanDisplay[x][y] = 1;
+	} else {
+		_HumanDisplay[x][y] = 0;
+	}
+}
 function CPUMakeMove() {
 	if (_cpumovemode == 0) {
 		let first = true;
@@ -63,10 +176,10 @@ function CPUMakeMove() {
 			if (_cpumovemode == 0) {
 				_lastx += 2;
 				if (_lastx == 10) {
-					_lastx = 0;
+					_lastx = 1;
 					_lasty++;
 				} else if (_lastx == 11) {
-					_lastx = 1;
+					_lastx = 0;
 					_lasty++;
 				}
 				if (_lasty > 9) {
@@ -176,14 +289,17 @@ function init(humanBoardState) {
 	_CPUBoard = [];
 	_CPUDisplay = [];
 	_HumanBoard = [];
+	_HumanDisplay = [];
 	for(let x = 0; x < 10; x++) {
 		_CPUBoard[x] = [];
 		_CPUDisplay[x] = [];
 		_HumanBoard[x] = [];
+		_HumanDisplay[x] = [];
 		for(let y = 0; y < 10; y++) {
 			_CPUBoard[x][y] = 0;
 			_CPUDisplay[x][y] = -1;
 			_HumanBoard[x][y] = humanBoardState[x][y];
+			_HumanDisplay[x][y] = -1;
 		}
 	}
 	placeShips();
@@ -284,6 +400,24 @@ function placeShips() {
 		}
 		//console.log("Fail safe value after exiting = " + failsafe);
 		//console.log(_CPUBoard);
+	}
+}
+function startupPrep() {
+	_CPUBoard = [];
+	_CPUDisplay = [];
+	_HumanBoard = [];
+	_HumanDisplay = [];
+	for(let x = 0; x < 10; x++) {
+		_CPUBoard[x] = [];
+		_CPUDisplay[x] = [];
+		_HumanBoard[x] = [];
+		_HumanDisplay[x] = [];
+		for(let y = 0; y < 10; y++) {
+			_CPUBoard[x][y] = 0;
+			_CPUDisplay[x][y] = -1;
+			_HumanBoard[x][y] = 0;
+			_HumanDisplay[x][y] = -1;
+		}
 	}
 }
 app.listen(PORT);

@@ -7,6 +7,7 @@
 "use strict";
 (function() {
 	const PORT = 3000;
+	const HOST = "http://localhost";
 	let _grid = []; // My data where my ships area
 	let _dishmgrid = []; // My data in format to interact with CPU moves
 	let _dishgrid = [];  // The data that is displayed to my targeting area
@@ -24,72 +25,9 @@
 		Sets up the color picker colors and sets up the handlers. */
 	function main() {
 		document.getElementById("restartbutton").onclick = restartGame;
+		document.getElementById("loadbutton").onclick = loadOldData;
 		init();
 		initSetUpShips();
-	}
-	function getCPUShipsSank() {
-		return "Unknown";
-	}
-	// I will assume this is called on a hit.
-	function sankShip(humanplayer, xx, yy) {
-		let grid = [];
-		let targetinggrid = [];
-		if (humanplayer) {
-			grid = _hostilegrid;
-			targetinggrid = _dishgrid;
-		} else {
-			grid = _grid;
-			targetinggrid = _dishmgrid;
-		}
-			let target = grid[xx][yy];
-			let length = shipIdToLength(target);
-			// Get to start of the ship.
-			if (xx != 0 && yy != 0) {
-				if (grid[xx - 1][yy] == target) {
-					xx--;
-					while(xx > 0 && grid[xx- 1][yy] == target) {
-						xx--;
-					}
-				} else if (grid[xx][yy - 1] == target) {
-					yy--;
-					while(yy > 0 && grid[xx][yy - 1] == target) {
-						yy--;
-					}
-				}
-			} else if (yy == 0) {
-				if (grid[xx - 1][yy] == target) {
-					xx--;
-					while(xx > 0 && grid[xx- 1][yy] == target) {
-						xx--;
-					}
-				}
-			} else if (xx == 0) {
-				if (grid[xx][yy - 1] == target) {
-					yy--;
-					while(yy > 0 && grid[xx][yy - 1] == target) {
-						yy--;
-					}
-				}
-			}
-			console.log("start of ship: " + xx + "," + yy);
-			// At start of ship, Walk the entire ship length.
-			let mod = 0;
-			if (grid[xx][yy + 1] == target) {
-				while(targetinggrid[xx][yy + mod]  ==  1 && grid[xx][yy + mod] == target && mod < length) {
-					mod++;
-				}
-				if (mod == length) {
-					return true;
-				}
-			} else if (grid[xx + 1][yy] == target) {
-				while(targetinggrid[xx + mod][yy]  ==  1 && grid[xx + mod][yy] == target && mod < length) {
-					mod++;
-				}
-				if (mod == length) {
-					return true;
-				}
-			}
-		return false;
 	}
 	function makeAMove() {
 		if (_allowMove) {
@@ -104,7 +42,7 @@
 			if (_dishgrid[x][y] == -1) {
 				if (_hostilegrid[x][y] != 0) {
 					_dishgrid[x][y] = 1;
-					console.log("Hit with id: " + _hostilegrid[x][y]);
+					//console.log("Hit with id: " + _hostilegrid[x][y]);
 					if (sankShip(true, x,y)) {
 						appendAShipSank(true,getShipNameById(_hostilegrid[x][y]));
 					}
@@ -114,7 +52,7 @@
 					_totalmisscount++;
 				}
 				//console.log(_dishgrid);
-				sendMoveToServer();
+				sendMoveToServer(x,y);
 				reDrawTargetingGrids();
 				let win = getWinStatus();
 				if (win == 1) {
@@ -149,7 +87,7 @@
 		return 0;
 	}
 	function getServerData() {
-		fetch("http://localhost:" + PORT +"/?win=100")
+		fetch(HOST + ":" + PORT +"/?win=100&x=0&y=0")
 		.then(checkStatus)
 		.then(function(res) {
 			let data = JSON.parse(res);
@@ -164,11 +102,13 @@
 			restartGame();
 		});
 	}
-	function sendMoveToServer() {
+	function sendMoveToServer(x,y) {
+		//console.log("Send move to server");
 		_allowMove = false;
+		let win = getWinStatus();
 		// AJAX Call 1
-		// Tell the server if we have won or not and get the cpu's move. 
-		fetch("http://localhost:" + PORT +"/?win=" + getWinStatus())
+		// Tell the server if we have won or not and get the servers game state.
+		fetch(HOST + ":" + PORT +"/?win=" + win + "&x=" + x +"&y=" + y)
 		.then(checkStatus)
 		.then(function(res) {
 			let data = JSON.parse(res);
@@ -177,6 +117,25 @@
 					_dishmgrid[x][y] = data[x][y];
 				}
 			}
+		})
+		.catch(function(error) {
+			console.log(error);
+			_allowMove = true;
+		});
+		if (win == -1 || win == 1) {
+			_allowMove = true;
+			return;
+		}
+		// AJAX Call 2
+		// Ask for the cords of the move that the CPU just made.
+		fetch(HOST + ":" + PORT +"/?win=" + 1000 + "&x=0&y=0")
+		.then(checkStatus)
+		.then(function(res) {
+			let data = JSON.parse(res);
+			if (sankShip(false, data[0], data[1])) {
+				appendAShipSank(false,getShipNameById(_grid[data[0]][data[1]]));
+			}
+			reDrawTargetingGrids();
 			_allowMove = true;
 		})
 		.catch(function(error) {
@@ -662,8 +621,8 @@
 		_allowMove = true;
 		_gameState = 0;
 		document.getElementById("aigrid").innerHTML = "";
-		document.getElementById("ShipsSank").innerHTML = "";
-		document.getElementById("HShipsSank").innerHTML = "";
+		document.getElementById("ShipsSank").innerHTML = "Ships Sank:";
+		document.getElementById("HShipsSank").innerHTML = "Your Ships Sunk:";
 		_totalhitcount = 0;
 		_totalmisscount = 0;
 		updateInfoPannel();
@@ -687,6 +646,103 @@
 			document.getElementById("HShipsSank").appendChild(n);
 			document.getElementById("HShipsSank").innerHTML += str;
 		}
+	}
+	// I will assume this is called on a hit.
+	function sankShip(humanplayer, xx, yy) {
+		if (xx < 0 || yy < 0) {
+			console.log("ERROR: sankShip x or y below 0!");
+			return;
+		}
+		let grid = [];
+		let targetinggrid = [];
+		if (humanplayer) {
+			grid = _hostilegrid;
+			targetinggrid = _dishgrid;
+		} else {
+			grid = _grid;
+			targetinggrid = _dishmgrid;
+		}
+		let target = grid[xx][yy];
+		let length = shipIdToLength(target);
+		// Get to start of the ship.
+		if (xx != 0 && yy != 0) {
+			if (grid[xx - 1][yy] == target) {
+				xx--;
+				while(xx > 0 && grid[xx- 1][yy] == target) {
+					xx--;
+				}
+			} else if (grid[xx][yy - 1] == target) {
+				yy--;
+				while(yy > 0 && grid[xx][yy - 1] == target) {
+					yy--;
+				}
+			}
+		} else if (yy == 0 && xx > 0) {
+			if (grid[xx - 1][yy] == target) {
+				xx--;
+				while(xx > 0 && grid[xx - 1][yy] == target) {
+					xx--;
+				}
+			}
+		} else if (xx == 0 && yy > 0) {
+			if (grid[xx][yy - 1] == target) {
+				yy--;
+				while(yy > 0 && grid[xx][yy - 1] == target) {
+					yy--;
+				}
+			}
+		}
+		//console.log("start of ship: " + xx + "," + yy);
+		// At start of ship, Walk the entire ship length.
+		let mod = 0;
+		if (grid[xx][yy + 1] == target) {
+			while((yy + mod) < 10 && targetinggrid[xx][yy + mod]  ==  1 && grid[xx][yy + mod] == target && mod < length) {
+				mod++;
+			}
+			if (mod == length) {
+				return true;
+			}
+		} else if (grid[xx + 1][yy] == target) {
+			while((xx + mod) < 10 && targetinggrid[xx + mod][yy]  ==  1 && grid[xx + mod][yy] == target && mod < length) {
+				mod++;
+			}
+			if (mod == length) {
+				return true;
+			}
+		}
+		return false;
+	}
+	function loadOldData() {
+		if (_gameState == 0) {
+			console.log("Must start a game before restoring an old one");
+			return;
+		}
+		_totalhitcount = 0;
+		_totalmisscount = 0;
+		console.log("loadOldData called!");
+		// AJAX Call 1
+		// Tell the server to read in the data for the last save game state then send it. 
+		fetch(HOST + ":" + PORT +"/?win=10000&x=0&y=0")
+		.then(checkStatus)
+		.then(function(res) {
+			//console.log(res);
+			let data = JSON.parse(res);
+			for(let x = 0; x < 10; x++) {
+				for(let y = 0; y < 10; y++) {
+					_grid[x][y] = data.humanraw[x][y];
+					_dishgrid[x][y] = data.humandisplay[x][y];
+					_hostilegrid[x][y] = data.cpuraw[x][y];
+					_dishmgrid[x][y] = data.cpudisplay[x][y];
+					if (_dishgrid[x][y] == 1) {
+						_totalhitcount++;
+					} else if (_dishgrid[x][y] == 0) {
+						_totalmisscount++;
+					}
+				}
+			}
+			reDrawTargetingGrids();
+			updateInfoPannel();			
+		})
 	}
 	/**
 	* [COPIED DIRRECTLY FROM THE LECTURE SLIDES]
