@@ -1,18 +1,20 @@
 {
   "name": "Battleship service",
   "version": "1.0.0",
+  "engines": {
+    "node": "10.15.1"
+  }
   "description": "Implements the battleship service",
   "main": "battleship_service.js",
   "dependencies": {
-  "body-parser": "^1.18.3",
+    "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "fs": "^0.0.1-security"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit
-    1"
-    },
+    "test": "echo \"Error: no test specified\" && exit 1"
+   },
   "keywords": [
     "example"
   ],
