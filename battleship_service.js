@@ -33,7 +33,7 @@ app.get('/', function (req, res) {
 	let win = parseInt(req.query.win);
 	let x = parseInt(req.query.x);
 	let y = parseInt(req.query.y);
-	console.log("win = " + win);
+	//console.log("win = " + win);
 	if (win == 100) { // The request for what the CPU's data is.
 		res.send(JSON.stringify(_CPUBoard));
 	} else if (win == 1000) { // The request for the last move.
@@ -61,11 +61,13 @@ app.get('/', function (req, res) {
 			}
 		}
 		res.send(JSON.stringify(data));
-	} else {
+	} else if (win == 0) {
 		humanMakeMove(x,y);
 		let responce = CPUMakeMove();
 		saveData();
 		res.send(responce);
+	} else {
+		res.send(202);
 	}
 })
 /**
@@ -91,6 +93,9 @@ app.use(function(req, res, next) {
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	next();
 });
+/**
+	Loads from a file, assumes one already exists informat.
+*/
 function loadOldState() {
 	let file = null;
 	try {
@@ -133,6 +138,9 @@ function loadOldState() {
 		}
 	}
 }
+/**
+	Saves the game state to a file.
+*/
 function saveData() {
 	let content = "";
 	for(let type = 0; type < 4; type++) {
@@ -160,6 +168,9 @@ function saveData() {
 		}
 	});
 }
+/**
+	Updates the info on server about what the player did.
+*/
 function humanMakeMove(x,y) {
 	if (_CPUBoard[x][y] != 0) {
 		_HumanDisplay[x][y] = 1;
@@ -167,6 +178,9 @@ function humanMakeMove(x,y) {
 		_HumanDisplay[x][y] = 0;
 	}
 }
+/**
+	Makes a CPU move and returns its state.
+*/
 function CPUMakeMove() {
 	if (_cpumovemode == 0) {
 		let first = true;
@@ -242,11 +256,11 @@ function CPUMakeMove() {
 		_lastx = x;
 		_lasty = y;
 		if (u == target) {
-			console.log("going up");
+			//console.log("going up");
 			while(_lasty != 0 && _HumanBoard[_lastx][_lasty - 1] == target) {
-				console.log("going up in while loop");
+				//console.log("going up in while loop");
 				if (_lasty != 0 && _CPUDisplay[_lastx][_lasty - 1] == -1 && _HumanBoard[_lastx][_lasty - 1] == target) {
-					console.log("going up should return");
+					//console.log("going up should return");
 					doCPUMove(_lastx,_lasty - 1);
 					return _CPUDisplay;
 				}
@@ -256,11 +270,11 @@ function CPUMakeMove() {
 		_lastx = x;
 		_lasty = y;
 		if (d == target) {
-			console.log("going down");
+			//console.log("going down");
 			while(_lasty != 9 && _HumanBoard[_lastx][_lasty + 1] == target) {
-				console.log("going down in while loop");
+				//console.log("going down in while loop");
 				if (_lasty != 9 && _CPUDisplay[_lastx][_lasty + 1] == -1 && _HumanBoard[_lastx][_lasty + 1] == target) {
-					console.log("going down should return");
+					//console.log("going down should return");
 					doCPUMove(_lastx,_lasty + 1);
 					return _CPUDisplay;
 				}
@@ -275,6 +289,9 @@ function CPUMakeMove() {
 	}
 	return _CPUDisplay;
 }
+/**
+	Runs the CPU move and interacts with the underlying data structures.
+*/
 function doCPUMove(x,y) {
 	_lastx = x;
 	_lasty = y;
@@ -285,6 +302,9 @@ function doCPUMove(x,y) {
 		_CPUDisplay[x][y] = 0;
 	}
 }
+/**
+	Inits a new game.
+*/
 function init(humanBoardState) {
 	_CPUBoard = [];
 	_CPUDisplay = [];
