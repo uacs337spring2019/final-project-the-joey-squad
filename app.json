@@ -2,6 +2,6 @@
   "name": "Joeys Battleship",
   "description": "A website that implements battleship",
   "repository": "https://github.com/uacs337spring2019/final-project-the-joey-squad",
-  "logo": "https://rawgit.com/heroku/node-js-sample/master/public/node.svg"
+  "logo": "https://rawgit.com/heroku/node-js-sample/master/public/node.svg",
   "keywords": ["node", "express", "static", "fs", "bodyParser"]
 }
